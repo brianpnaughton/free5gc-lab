@@ -1,0 +1,5 @@
+
+- name: start iperf test
+  community.docker.docker_container_exec:
+    container: ueransim
+    command: /bin/bash -c "nohup iperf -c 172.168.56.2 -t0 < /dev/null > ./test.log 2>&1 & sleep 1"

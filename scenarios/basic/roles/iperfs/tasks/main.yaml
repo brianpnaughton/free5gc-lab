@@ -1,0 +1,9 @@
+- name: install iperf software
+  community.docker.docker_container_exec:
+    container: iperfs
+    command: /bin/bash -c "apt update && apt install -y iproute2 iputils-ping iperf procps"
+
+- name: start iperf server
+  community.docker.docker_container_exec:
+    container: iperfs
+    command: /bin/bash -c "nohup iperf -s < /dev/null > ./iperfs.log 2>&1 & sleep 1"

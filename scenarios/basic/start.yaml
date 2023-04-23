@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+    - import_role:
+        name: free5gc
+    - import_role:
+        name: startue
+    - import_role:
+        name: iperfs

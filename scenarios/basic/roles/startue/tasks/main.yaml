@@ -1,0 +1,37 @@
+
+- name: set imsi vars
+  set_fact: 
+    imsi: 208930000000003
+    plmnid: 20893
+
+- set_fact: 
+    payload: "{{ lookup('template', './templates/ue.json') }}"
+
+- name: create subscriber
+  uri: 
+    url: 'http://192.168.10.100:5000/api/subscriber/imsi-{{ imsi }}/{{ plmnid }}'
+    method: POST
+    return_content: yes
+    body: '{{ payload }}'
+    body_format: json
+    status_code: 201
+    follow_redirects: all
+    headers:
+      Token: admin
+
+- name: start the ue in ueransim container
+  community.docker.docker_container_exec:
+    container: ueransim
+    command: /bin/bash -c "nohup ./nr-ue -c config/uecfg.yaml < /dev/null > ./ue.log 2>&1 & sleep 1"
+    chdir: /ueransim
+
+- name: install iperf software
+  community.docker.docker_container_exec:
+    container: ueransim
+    command: /bin/bash -c "apt update && apt install -y net-tools iproute2 iputils-ping iperf procps"
+
+- name: add iperf route 
+  community.docker.docker_container_exec:
+    container: ueransim
+    command: /bin/bash -c "route add -net 172.168.56.0/24 dev uesimtun0"
+
