@@ -1,31 +1,4 @@
 $script = <<-SCRIPT
-# export DEBIAN_FRONTEND=noninteractive
-sudo apt-get update -qq \
-	&& sudo apt-get install -qq \
-		git \
-		build-essential \
-		vim \
-		strace \
-		net-tools \
-		iputils-ping \
-		iproute2 \
-		python3 \
-		python3-pip \
-		nmon \
-		iotop \
-		ca-certificates \
-		curl \
-		gnupg-agent \
-		apt-transport-https \
-		software-properties-common\
-		openjdk-8-jre \
-		bridge-utils
-
-pip install ansible docker docker-compose
-
-sudo chmod 777 /opt
-
-# install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
@@ -69,6 +42,9 @@ Vagrant.configure(2) do |config|
       libvirt.memory = 8092
       libvirt.nested = true
     end
-   nodeconfig.vm.provision "shell", inline: $script
+    nodeconfig.vm.provision "ansible" do |ansible|
+      ansible.playbook = "setup.yml"
+    end
+    nodeconfig.vm.provision "shell", inline: $script
   end
 end
