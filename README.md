@@ -12,3 +12,4 @@ vagrant ssh
 ## Run a test
 
 * [Run a basic simple scenario](scenarios/basic/basic.md)
+* [Run an advanced scenario](scenarios/advanced/advanced.md)
