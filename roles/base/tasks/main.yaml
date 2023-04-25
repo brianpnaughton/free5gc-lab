@@ -127,6 +127,18 @@
     state: started
     msg: "kafka is not running"
 
+- name: deploy kafdrop
+  community.docker.docker_container:
+    name: kafdrop
+    image: obsidiandynamics/kafdrop
+    state: started
+    recreate: true
+    restart_policy: always
+    ports:
+      - 9000:9000
+    env:
+      KAFKA_BROKERCONNECT: localhost:9092
+
 # docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
 
 # - name: create topic for cadvisor

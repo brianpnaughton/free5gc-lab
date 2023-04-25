@@ -15,6 +15,8 @@ Vagrant.configure(2) do |config|
     nodeconfig.vm.network "forwarded_port", guest: 8080, host: 8080
     # open port for portainer
     nodeconfig.vm.network "forwarded_port", guest: 9443, host: 9443
+    # open port for kafdrop
+    nodeconfig.vm.network "forwarded_port", guest: 9000, host: 9000
 
     nodeconfig.vm.provider :libvirt do |libvirt|
       libvirt.cpus = 4
