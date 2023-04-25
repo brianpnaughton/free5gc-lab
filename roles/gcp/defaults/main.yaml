@@ -1,0 +1,6 @@
+GCP: False 
+gcp_cred_file: /home/my_account.json
+gcp_project: my-project
+gcp_cred_kind: serviceaccount
+zone: "us-central1-a"
+region: "us-central1"

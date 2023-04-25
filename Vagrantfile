@@ -4,6 +4,7 @@ Vagrant.configure(2) do |config|
     nodeconfig.vm.box = 'ubuntu20'
 
     nodeconfig.vm.network "private_network", ip: "192.168.10.100"
+
     # open port for free5gc webui
     nodeconfig.vm.network "forwarded_port", guest: 5000, host: 5000
     # open port for grafana
@@ -12,6 +13,8 @@ Vagrant.configure(2) do |config|
     nodeconfig.vm.network "forwarded_port", guest: 9090, host: 9090
     # open port for cadvisor
     nodeconfig.vm.network "forwarded_port", guest: 8080, host: 8080
+    # open port for portainer
+    nodeconfig.vm.network "forwarded_port", guest: 9443, host: 9443
 
     nodeconfig.vm.provider :libvirt do |libvirt|
       libvirt.cpus = 4
@@ -20,8 +23,7 @@ Vagrant.configure(2) do |config|
     end
 
     nodeconfig.vm.provision "ansible" do |ansible|
-      ansible.playbook = "setup.yml"
+      ansible.playbook = "setup.yaml"
     end
-
   end
 end

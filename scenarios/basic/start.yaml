@@ -1,4 +1,5 @@
 - hosts: localhost
+  become: yes
   tasks:
     - import_role:
         name: free5gc
