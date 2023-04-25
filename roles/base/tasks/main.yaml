@@ -78,21 +78,6 @@
   args:
     chdir: /opt/gtp5
 
-- name: create /opt/prometheus
-  file:
-    path: /opt/prometheus
-    state: directory
-    mode: '0777' 
-
-- name: git checkout prometheus
-  ansible.builtin.git:
-    repo: https://github.com/vegasbrianc/prometheus
-    dest: /opt/prometheus
-
-- name: run prometheus docker compose stack
-  community.docker.docker_compose:
-    project_src: /opt/prometheus
-
 - name: Run portainer
   community.docker.docker_container:
     name: portainer
@@ -106,3 +91,62 @@
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+
+# - name: create /opt/prometheus
+#   file:
+#     path: /opt/prometheus
+#     state: directory
+#     mode: '0777' 
+
+# - name: git checkout prometheus
+#   ansible.builtin.git:
+#     repo: https://github.com/vegasbrianc/prometheus
+#     dest: /opt/prometheus
+
+# - name: run prometheus docker compose stack
+#   community.docker.docker_compose:
+#     project_src: /opt/prometheus
+
+- name: copy kafka compose file
+  ansible.builtin.template:
+    src: kafka-compose.yaml
+    dest: /opt
+    mode: '0644'    
+
+- name: deploy kafka
+  community.docker.docker_compose:
+    project_src: /opt
+    files: kafka-compose.yaml
+
+- name: Validating if Kafka is up and listening
+  wait_for:
+    host: localhost
+    port: 9092
+    delay: 10
+    timeout: 30
+    state: started
+    msg: "kafka is not running"
+
+# docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
+
+# - name: create topic for cadvisor
+#   community.docker.docker_container_exec:
+#     container: broker
+#     command: /bin/bash -c "kafka-topics --bootstrap-server broker:9092 --create --topic quickstart"
+
+- name: deploy cadvisor and connect to kafka
+  community.docker.docker_container:
+    name: cadvisor
+    image: gcr.io/cadvisor/cadvisor
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list=localhost:9092","-storage_driver_kafka_topic=cadvisor"]
+    state: started
+    recreate: true
+    restart_policy: always
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8080:8080
+
