@@ -120,8 +120,8 @@
 
 - name: Validating if Kafka is up and listening
   wait_for:
-    host: localhost
-    port: 9092
+    host: 192.168.10.100
+    port: 29092
     delay: 10
     timeout: 30
     state: started
@@ -137,7 +137,7 @@
     ports:
       - 9000:9000
     env:
-      KAFKA_BROKERCONNECT: localhost:9092
+      KAFKA_BROKERCONNECT: "192.168.10.100:29092"
 
 # docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
 
@@ -150,7 +150,7 @@
   community.docker.docker_container:
     name: cadvisor
     image: gcr.io/cadvisor/cadvisor
-    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list=localhost:9092","-storage_driver_kafka_topic=cadvisor"]
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list=192.168.10.100:29092","-storage_driver_kafka_topic=cadvisor"]
     state: started
     recreate: true
     restart_policy: always
