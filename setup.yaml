@@ -1,18 +1,13 @@
 ---
 - hosts: all
-  vars:
-    GCP: false
-  tasks:
-    - import_role:
-        name: gcp
-      when: GCP is true
-
-- hosts: all
   become: yes
+  vars:
+    # set to true to deploy a local kafka instance, if false then external kafka is expected
+    - deployKafka: true
+    # set the IP/hostname of the external Kafka instance to connect to
+    - externalKafkaAddress: "localhost:9092"
+    # set to true to deploy a full prometheus/grafana/cadvisor stack, else deploy just a cAdvisor and connect to kafka
+    - deployPrometheus: false
   tasks:
-    - debug:
-        var: ansible_play_hosts
-
     - import_role:
         name: base
-      when: "'localhost' not in ansible_play_hosts"

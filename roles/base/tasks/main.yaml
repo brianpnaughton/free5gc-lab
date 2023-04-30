@@ -35,6 +35,9 @@
       - docker 
       - docker-compose
 
+- name: update the version of requests
+  command: pip install --update requests
+
 - name: Add Docker GPG apt Key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
@@ -92,40 +95,46 @@
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
 
-# - name: create /opt/prometheus
-#   file:
-#     path: /opt/prometheus
-#     state: directory
-#     mode: '0777' 
+- name: create /opt/prometheus
+  file:
+    path: /opt/prometheus
+    state: directory
+    mode: '0777' 
+  when: deployPrometheus == yes
 
-# - name: git checkout prometheus
-#   ansible.builtin.git:
-#     repo: https://github.com/vegasbrianc/prometheus
-#     dest: /opt/prometheus
+- name: git checkout prometheus
+  ansible.builtin.git:
+    repo: https://github.com/vegasbrianc/prometheus
+    dest: /opt/prometheus
+  when: deployPrometheus == yes
 
-# - name: run prometheus docker compose stack
-#   community.docker.docker_compose:
-#     project_src: /opt/prometheus
+- name: run prometheus docker compose stack
+  community.docker.docker_compose:
+    project_src: /opt/prometheus
+  when: deployPrometheus == yes
 
 - name: copy kafka compose file
   ansible.builtin.template:
     src: kafka-compose.yaml
     dest: /opt
     mode: '0644'    
+  when: deployKafka == yes
 
 - name: deploy kafka
   community.docker.docker_compose:
     project_src: /opt
     files: kafka-compose.yaml
+  when: deployKafka == yes
 
 - name: Validating if Kafka is up and listening
   wait_for:
-    host: 192.168.10.100
+    host: "{{ ansible_default_ipv4.address }}"
     port: 29092
     delay: 10
     timeout: 30
     state: started
     msg: "kafka is not running"
+  when: deployKafka == yes
 
 - name: deploy kafdrop
   community.docker.docker_container:
@@ -137,10 +146,10 @@
     ports:
       - 9000:9000
     env:
-      KAFKA_BROKERCONNECT: "192.168.10.100:29092"
+      KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:29092"
+  when: deployKafka == yes
 
 # docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
-
 # - name: create topic for cadvisor
 #   community.docker.docker_container_exec:
 #     container: broker
@@ -150,7 +159,7 @@
   community.docker.docker_container:
     name: cadvisor
     image: gcr.io/cadvisor/cadvisor
-    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list=192.168.10.100:29092","-storage_driver_kafka_topic=cadvisor"]
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ if deployKafka == true ansible_default_ipv4.address:29092 else externalKafkaAddress }}","-storage_driver_kafka_topic=cadvisor"]
     state: started
     recreate: true
     restart_policy: always
@@ -161,4 +170,4 @@
       - /var/lib/docker/:/var/lib/docker:ro
     ports:
       - 8080:8080
-
+  when: deployPrometheus == false
