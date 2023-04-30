@@ -3,11 +3,15 @@
   become: yes
   vars:
     # set to true to deploy a local kafka instance, if false then external kafka is expected
-    - deployKafka: true
+    - deployKafka: false
     # set the IP/hostname of the external Kafka instance to connect to
-    - externalKafkaAddress: "localhost:9092"
+    - externalKafkaAddress: "localhost"
+    # kafka port internal/external
+    - kafkaPort: 9092
     # set to true to deploy a full prometheus/grafana/cadvisor stack, else deploy just a cAdvisor and connect to kafka
-    - deployPrometheus: false
+    - deployPrometheus: true
+    # set to true to deploy portainer
+    - deployPortainer: false
   tasks:
     - import_role:
         name: base

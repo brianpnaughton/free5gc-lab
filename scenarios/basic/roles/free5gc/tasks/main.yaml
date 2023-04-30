@@ -1,6 +1,6 @@
 - name: start free5gc instance
   community.docker.docker_compose:
-    project_src: /vagrant/scenarios/basic
+    project_src: .
     files:
     - docker-compose.yaml
 

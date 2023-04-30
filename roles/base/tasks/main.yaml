@@ -36,7 +36,7 @@
       - docker-compose
 
 - name: update the version of requests
-  command: pip install --update requests
+  command: pip install --upgrade requests
 
 - name: Add Docker GPG apt Key
   apt_key:
@@ -94,13 +94,14 @@
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+  when: deployPortainer == true
 
 - name: create /opt/prometheus
   file:
     path: /opt/prometheus
     state: directory
     mode: '0777' 
-  when: deployPrometheus == yes
+  when: deployPrometheus == true
 
 - name: git checkout prometheus
   ansible.builtin.git:
@@ -111,20 +112,20 @@
 - name: run prometheus docker compose stack
   community.docker.docker_compose:
     project_src: /opt/prometheus
-  when: deployPrometheus == yes
+  when: deployPrometheus == true
 
 - name: copy kafka compose file
   ansible.builtin.template:
     src: kafka-compose.yaml
     dest: /opt
     mode: '0644'    
-  when: deployKafka == yes
+  when: deployKafka == true
 
 - name: deploy kafka
   community.docker.docker_compose:
     project_src: /opt
     files: kafka-compose.yaml
-  when: deployKafka == yes
+  when: deployKafka == true
 
 - name: Validating if Kafka is up and listening
   wait_for:
@@ -134,7 +135,7 @@
     timeout: 30
     state: started
     msg: "kafka is not running"
-  when: deployKafka == yes
+  when: deployKafka == true
 
 - name: deploy kafdrop
   community.docker.docker_container:
@@ -147,7 +148,7 @@
       - 9000:9000
     env:
       KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:29092"
-  when: deployKafka == yes
+  when: deployKafka == true
 
 # docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
 # - name: create topic for cadvisor
@@ -159,7 +160,7 @@
   community.docker.docker_container:
     name: cadvisor
     image: gcr.io/cadvisor/cadvisor
-    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ if deployKafka == true ansible_default_ipv4.address:29092 else externalKafkaAddress }}","-storage_driver_kafka_topic=cadvisor"]
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ (deployKafka) ansible_default_ipv4.address ansible_default_ipv4.address | externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor"]
     state: started
     recreate: true
     restart_policy: always
