@@ -67,11 +67,13 @@
     path: /opt/gtp5
     state: directory
     mode: '0777' 
+  when: installGTP == true
 
 - name: git checkout from gtp5
   ansible.builtin.git:
     repo: https://github.com/free5gc/gtp5g.git
     dest: /opt/gtp5
+  when: installGTP == true
 
 - name: Build and install gtp module
   ansible.builtin.shell: |
@@ -80,6 +82,7 @@
     make install
   args:
     chdir: /opt/gtp5
+  when: installGTP == true
 
 - name: Run portainer
   community.docker.docker_container:
@@ -111,16 +114,14 @@
 
 - name: run prometheus docker compose stack
   community.docker.docker_compose:
-    project_src: /opt/prometheus
-  when: deployPrometheus == true
-
-- name: copy kafka compose file
+    project_src: /opt/prometheus  when: deployPrometheus == true
+# 
   ansible.builtin.template:
-    src: kafka-compose.yaml
-    dest: /opt
+    src: kafluentd.conf   dest: /opt
     mode: '0644'    
   when: deployKafka == true
-
+  when: d
+  eployFluentd == true
 - name: deploy kafka
   community.docker.docker_compose:
     project_src: /opt
@@ -130,7 +131,7 @@
 - name: Validating if Kafka is up and listening
   wait_for:
     host: "{{ ansible_default_ipv4.address }}"
-    port: 29092
+    port: {{kafkaPort}}
     delay: 10
     timeout: 30
     state: started
@@ -172,3 +173,40 @@
     ports:
       - 8080:8080
   when: deployPrometheus == false
+
+- name: template fluentd config file
+  ansible.builtin.template:
+    src: fluentd.conf
+    dest: /opt
+    mode: '0644'    
+  when: deployFluentd == true
+
+- name: deploy fluentd
+# docker run -d -p 24224:24224 -p 24224:24224/udp -v /data:/fluentd/log fluent/fluentd:v1.3-debian-1
+  community.docker.docker_container:
+    name: fluentd
+    image: fluent/fluentd:v1.3-debian-1
+    entrypoint: ["fluentd -c", "/fluentd.conf"]
+    state: started
+    recreate: true
+    restart_policy: always
+    volumes:
+      - /data:/fluentd/log
+      - /opt/fluentd.conf:/fluentd.conf
+    ports:
+      - 24224:24224
+      - 5140:5140
+  when: deployFluentd == true
+
+- name: deploy nprobe
+  community.docker.docker_container:
+    name: nprobe
+    image: ntop/nprobe:latest
+    entrypoint: ["/usr/bin/nprobe", "-i", "eth0"]
+    state: started
+    recreate: true
+    restart_policy: always
+    capabilities:
+      - NET_ADMIN
+    network_mode: host
+  when: deployNprobe == true
