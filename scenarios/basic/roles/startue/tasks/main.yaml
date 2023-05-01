@@ -9,7 +9,7 @@
 
 - name: create subscriber
   uri: 
-    url: 'http://{{ ansible_default_ipv4.address }}/api/subscriber/imsi-{{ imsi }}/{{ plmnid }}'
+    url: 'http://{{ ansible_default_ipv4.address }}:5000/api/subscriber/imsi-{{ imsi }}/{{ plmnid }}'
     method: POST
     return_content: yes
     body: '{{ payload }}'

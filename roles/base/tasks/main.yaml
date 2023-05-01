@@ -157,12 +157,6 @@
       KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:{{ kafkaPort }}"
   when: deployKafka == true
 
-# docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
-# - name: create topic for cadvisor
-#   community.docker.docker_container_exec:
-#     container: broker
-#     command: /bin/bash -c "kafka-topics --bootstrap-server broker:9092 --create --topic quickstart"
-
 - name: deploy cadvisor and connect to kafka
   community.docker.docker_container:
     name: cadvisor
@@ -219,18 +213,17 @@
     recreate: true
     restart_policy: always
     volumes:
-      - /opt/fluentd.conf:/fluentd.conf
+      - /opt/fluentd/fluentd.conf:/fluentd.conf
     ports:
       - 24224:24224
       - 5140:5140
   when: deployFluentd == true
 
-- name: template fluentd config file
-  ansible.builtin.template:
-    src: rsyslog.conf
-    dest: /etc
-    mode: '0644'    
-  when: deployFluentd == true
+- name: add fluentd syslog server address to rsyslog config
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    line: "*.* @@{{ ansible_default_ipv4.address }}:5140"
+    insertafter: EOF
 
 - name: restart rsyslog
   ansible.builtin.systemd:
