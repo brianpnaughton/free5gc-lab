@@ -1,0 +1,8 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: kill free5gc instance
+      community.docker.docker_compose:
+        files:
+        - docker-compose.yaml
+        state: absent

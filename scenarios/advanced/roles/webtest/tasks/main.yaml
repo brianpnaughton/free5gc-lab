@@ -1,0 +1,20 @@
+- name: install apache bench to the UE/gNB containers
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: /bin/bash -c "apt install -y apache2-utils "
+  with_items:
+    - ueransim1
+    - ueransim2
+    - ueransim3
+    - ueransim4
+
+- name: run apache bench on each UE/gNB pair
+  community.docker.docker_container_exec:
+    container: "{{ with_items }}"
+    command: /bin/bash -c "nohup ab -n 100 -c 1 -g out.data http://172.168.56.20/ < /dev/null > ./test.log 2>&1 & sleep 1"
+  with_items:
+    - ueransim1
+    - ueransim2
+    - ueransim3
+    - ueransim4
+

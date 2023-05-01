@@ -1,0 +1,33 @@
+- name: set imsis
+  set_fact:
+    imsis: 
+      - 208930000000003
+      - 208930000000004
+      - 208930000000005
+      - 208930000000006
+
+- name: Create subscribers
+  include_tasks: subscriber.yml
+  loop: "{{ imsis }}"
+
+- name: start the ue in ueransim container
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: /bin/bash -c "nohup ./nr-ue -c config/uecfg.yaml < /dev/null > ./ue.log 2>&1 & sleep 1"
+    chdir: /ueransim
+  with_items:
+    - ueransim1
+    - ueransim2
+    - ueransim3
+    - ueransim4
+
+- name: add DN route 
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: /bin/bash -c "route add -net 172.168.56.0/24 dev uesimtun0"
+  with_items:
+    - ueransim1
+    - ueransim2
+    - ueransim3
+    - ueransim4
+
