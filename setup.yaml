@@ -7,17 +7,17 @@
     # set to true to deploy a local fluentd instance
     - deployFluentd: true
     # set to true to deploy a local nprobe instance
-    - deployNprobe: true
+    - deployNprobe: false
     # set to true to deploy a local kafka instance, if false then external kafka is expected
-    - deployKafka: false
+    - deployKafka: true
     # set the IP/hostname of the external Kafka instance to connect to
     - externalKafkaAddress: "localhost"
     # kafka port internal/external
     - kafkaPort: 29092
     # set to true to deploy a full prometheus/grafana/cadvisor stack, else deploy just a cAdvisor and connect to kafka
-    - deployPrometheus: true
+    - deployPrometheus: false
     # set to true to deploy portainer
-    - deployPortainer: false
+    - deployPortainer: true
   tasks:
     - import_role:
         name: base

@@ -25,6 +25,7 @@
       - software-properties-common
       - openjdk-8-jre 
       - bridge-utils
+      - rsyslog
     state: latest
     update_cache: true
 
@@ -57,10 +58,13 @@
     state: latest
     update_cache: true
 
+# sudo usermod -aG docker $USER
+
 - name: install headers matching kernel
   apt:
     pkg:
     - linux-headers-{{ansible_kernel}}
+  when: installGTP == true
 
 - name: create /opt/gtp5
   file:
@@ -110,18 +114,20 @@
   ansible.builtin.git:
     repo: https://github.com/vegasbrianc/prometheus
     dest: /opt/prometheus
-  when: deployPrometheus == yes
+  when: deployPrometheus == true
 
 - name: run prometheus docker compose stack
   community.docker.docker_compose:
-    project_src: /opt/prometheus  when: deployPrometheus == true
-# 
+    project_src: /opt/prometheus  
+  when: deployPrometheus == true
+
+- name: deploy kafka template
   ansible.builtin.template:
-    src: kafluentd.conf   dest: /opt
+    src: kafka-compose.yaml   
+    dest: /opt
     mode: '0644'    
   when: deployKafka == true
-  when: d
-  eployFluentd == true
+
 - name: deploy kafka
   community.docker.docker_compose:
     project_src: /opt
@@ -131,7 +137,7 @@
 - name: Validating if Kafka is up and listening
   wait_for:
     host: "{{ ansible_default_ipv4.address }}"
-    port: {{kafkaPort}}
+    port: "{{kafkaPort}}"
     delay: 10
     timeout: 30
     state: started
@@ -148,7 +154,7 @@
     ports:
       - 9000:9000
     env:
-      KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:29092"
+      KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:{{ kafkaPort }}"
   when: deployKafka == true
 
 # docker exec broker kafka-topics --bootstrap-server broker:9092 --create --topic quickstart
@@ -161,7 +167,7 @@
   community.docker.docker_container:
     name: cadvisor
     image: gcr.io/cadvisor/cadvisor
-    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ (deployKafka) ansible_default_ipv4.address ansible_default_ipv4.address | externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor"]
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ ansible_default_ipv4.address if deployKafka else externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor"]
     state: started
     recreate: true
     restart_policy: always
@@ -174,35 +180,69 @@
       - 8080:8080
   when: deployPrometheus == false
 
+- name: create fluentd dir
+  ansible.builtin.file:
+    path: /opt/fluentd
+    state: directory
+    mode: 0644
+
 - name: template fluentd config file
   ansible.builtin.template:
     src: fluentd.conf
-    dest: /opt
+    dest: /opt/fluentd
     mode: '0644'    
   when: deployFluentd == true
 
+- name: template fluentd dockerfile
+  ansible.builtin.template:
+    src: Dockerfile-fluentd.conf
+    dest: /opt/fluentd/Dockerfile
+    mode: '0644'    
+  when: deployFluentd == true
+
+- name: Build fluentd docker image
+  community.docker.docker_image:
+    build:
+      path: /opt/fluentd
+    name: myfluentd
+    tag: v1
+    state: present
+    source: build
+  when: deployFluentd == true
+
 - name: deploy fluentd
-# docker run -d -p 24224:24224 -p 24224:24224/udp -v /data:/fluentd/log fluent/fluentd:v1.3-debian-1
   community.docker.docker_container:
     name: fluentd
-    image: fluent/fluentd:v1.3-debian-1
-    entrypoint: ["fluentd -c", "/fluentd.conf"]
+    image: myfluentd:v1
+    entrypoint: ["fluentd","-c", "/fluentd.conf"]
     state: started
     recreate: true
     restart_policy: always
     volumes:
-      - /data:/fluentd/log
       - /opt/fluentd.conf:/fluentd.conf
     ports:
       - 24224:24224
       - 5140:5140
   when: deployFluentd == true
 
+- name: template fluentd config file
+  ansible.builtin.template:
+    src: rsyslog.conf
+    dest: /etc
+    mode: '0644'    
+  when: deployFluentd == true
+
+- name: restart rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    state: restarted
+  when: deployFluentd == true
+
 - name: deploy nprobe
   community.docker.docker_container:
     name: nprobe
     image: ntop/nprobe:latest
-    entrypoint: ["/usr/bin/nprobe", "-i", "eth0"]
+    entrypoint: ["/usr/bin/nprobe", "-i", "eth0", "--kafka", "{{ ansible_default_ipv4.address }}:{{ kafkaPort }};topicFlows"]
     state: started
     recreate: true
     restart_policy: always
@@ -210,3 +250,4 @@
       - NET_ADMIN
     network_mode: host
   when: deployNprobe == true
+
