@@ -20,10 +20,11 @@ vagrant ssh
 To deploy the lab on Google Cloud do the following
 
 * Ensure secure VM policy is disabled. This is required because we will install GTP kernel module during the setup process. 
-* Create a VPC network and update the firewall policies to allow the following ports
+* Create a VPC network and update the firewall policies to open the following ports
 
   * 9000 (kafdrop)
-  * 5000 (webui)
+  * 29092 (kafka)
+  * 5000 (free5gc webui)
   * 3000 (grafana)
   * 9090 (prometheus)
   * 8080 (cadvisor)
@@ -53,6 +54,10 @@ Then run the __setup.yaml__ playbook
 ```bash
 ansible-playbook setup.yaml
 ```
+
+./kafka-console-consumer.sh --bootstrap-server broker:9092 --topic cadvisor --from-beginning --max-messages 10
+
+
 
 ## Data and Analytics Use Cases
 
