@@ -10,6 +10,8 @@
     - deployNprobe: false
     # set to true to deploy a local kafka instance, if false then external kafka is expected
     - deployKafka: true
+    # set to true to deploy a local kafdrop instance
+    - deployKafdrop: false
     # set the IP/hostname of the external Kafka instance to connect to
     - externalKafkaAddress: "localhost"
     # kafka port internal/external

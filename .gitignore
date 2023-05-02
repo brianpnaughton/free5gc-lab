@@ -4,4 +4,8 @@
 **/*.gz
 **/*.zip
 **/.vagrant
+**/env
+**/*egg-info
+
+
 

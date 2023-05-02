@@ -1,1 +1,2 @@
 apache-beam==2.46.0
+beam-nuggets

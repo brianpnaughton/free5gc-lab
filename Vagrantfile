@@ -7,7 +7,7 @@ Vagrant.configure(2) do |config|
 
     # open port for free5gc webui
     nodeconfig.vm.network "forwarded_port", guest: 5000, host: 5000
-    # open port for grafana
+    # open port for grafana & ntopng
     nodeconfig.vm.network "forwarded_port", guest: 3000, host: 3000
     # open port for prometheus server
     nodeconfig.vm.network "forwarded_port", guest: 9090, host: 9090

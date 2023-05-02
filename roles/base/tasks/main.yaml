@@ -155,7 +155,7 @@
       - 9000:9000
     env:
       KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:{{ kafkaPort }}"
-  when: deployKafka == true
+  when: deployKafdrop == true
 
 - name: deploy cadvisor and connect to kafka
   community.docker.docker_container:
@@ -231,16 +231,28 @@
     state: restarted
   when: deployFluentd == true
 
-- name: deploy nprobe
-  community.docker.docker_container:
-    name: nprobe
-    image: ntop/nprobe:latest
-    entrypoint: ["/usr/bin/nprobe", "-i", "eth0", "--kafka", "{{ ansible_default_ipv4.address }}:{{ kafkaPort }};topicFlows"]
-    state: started
-    recreate: true
-    restart_policy: always
-    capabilities:
-      - NET_ADMIN
-    network_mode: host
+# - name: deploy nprobe
+#   community.docker.docker_container:
+#     name: nprobe
+#     image: ntop/nprobe:latest
+#     entrypoint: ["/usr/bin/nprobe", "-i", "eth0", "--kafka", "{{ ansible_default_ipv4.address }}:{{ kafkaPort }};topicFlows"]
+#     state: started
+#     recreate: true
+#     restart_policy: always
+#     capabilities:
+#       - NET_ADMIN
+#     network_mode: host
+#   when: deployNprobe == true
+
+- name: deploy ntop template
+  ansible.builtin.template:
+    src: ntopng-compose.yaml   
+    dest: /opt
+    mode: '0644'    
   when: deployNprobe == true
 
+- name: deploy ntop
+  community.docker.docker_compose:
+    project_src: /opt
+    files: ntopng-compose.yaml
+  when: deployNprobe == true
