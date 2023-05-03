@@ -1,8 +1,23 @@
 import logging
 
 import apache_beam as beam
+import json
+import pprint
 from apache_beam.options.pipeline_options import PipelineOptions
 from beam_nuggets.io.kafkaio import KafkaConsume
+
+inventory=['upf',
+           'iperfs',
+           'mongodb',
+           'nrf',
+           'amf',
+           'ausf',
+           'nssf',
+           'pcf',
+           'smf',
+           'udm',
+           'udr',
+           'ueransim']
 
 def run(
     bootstrap_servers,
@@ -11,11 +26,15 @@ def run(
 
   window_size = 10  # size of the Window in seconds.
 
-  class LogData(beam.DoFn):
+  class FilterInventory(beam.DoFn):
     def process(self, record):
-      logging.info("brian")
-      logging.info(record)
-      return [len(record)]
+      logging.info("filtering inventory")
+      key,message=record
+      m=json.loads(message)
+      if 'container_Name' in m:
+        if m['container_Name'] in inventory:
+          logging.info('record '+ m['container_Name'] + ' in inventory')
+          return m
 
   with beam.Pipeline(options=pipeline_options) as pipeline:
     _ = (
@@ -24,9 +43,12 @@ def run(
                   consumer_config={'bootstrap_servers': bootstrap_servers,
                                     'topic': topic,
                                     'auto_offset_reset': 'earliest',
-                                    'group_id': 'transaction_classification'})
+                                    'group_id': 'transaction_classification'}
+                  # value_decoder=lambda m: json.loads(m.decode('utf-8'))
+              )
             | "Fixed window 5s" >> beam.WindowInto(beam.window.FixedWindows(window_size))
-            | "Print elements" >> beam.ParDo(LogData())
+            | "Filter out non-inventory related elements" >> beam.ParDo(FilterInventory())
+            # | "Print elements" >> beam.Map(print)
         )
 
 if __name__ == '__main__':

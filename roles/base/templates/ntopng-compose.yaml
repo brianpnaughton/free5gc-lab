@@ -6,16 +6,16 @@ services:
     network_mode: "host"
 
   nprobe:
-    image: "frostasm/ntopng-docker:latest"
-    command: ['nprobe', '--interface', 'eth0', '--zmq', 'tcp://{{ ansible_default_ipv4.address }}:5556']
+    image: "ntop/nprobe:latest"
+    command: ['/usr/bin/nprobe', '--interface', 'eth0', '--zmq', 'tcp://{{ ansible_default_ipv4.address }}:5556']
     network_mode: "host"
     depends_on:
      - ntopng
 
   ntopng:
-    image: "frostasm/ntopng-docker:latest"
+    image: "ntop/ntopng:latest"
     # command: ["ntopng", "--redis", "redis", "--interface", "tcp://nprobe:1234", "--local-networks", "192.168.88.0/24", "-F", "kafka;{{ ansible_default_ipv4.address }}:{{ kafkaPort }};ntopngFlows"]
-    command: ["ntopng", "-i", "tcp://{{ ansible_default_ipv4.address }}:5556c", "-F", "kafka;{{ ansible_default_ipv4.address }}:{{ kafkaPort }};ntopngFlows"]
+    command: ["/usr/bin/ntopng", "-i", "tcp://{{ ansible_default_ipv4.address }}:5556c", "-F", "kafka;{{ ansible_default_ipv4.address }}:{{ kafkaPort }};ntopngFlows"]
     network_mode: "host"        
     depends_on:
      - redis
