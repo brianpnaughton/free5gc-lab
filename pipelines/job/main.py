@@ -34,7 +34,7 @@ def run(
       if 'container_Name' in m:
         if m['container_Name'] in inventory:
           logging.info('record '+ m['container_Name'] + ' in inventory')
-          return m
+          yield m
 
   with beam.Pipeline(options=pipeline_options) as pipeline:
     _ = (
@@ -48,7 +48,7 @@ def run(
               )
             | "Fixed window 5s" >> beam.WindowInto(beam.window.FixedWindows(window_size))
             | "Filter out non-inventory related elements" >> beam.ParDo(FilterInventory())
-            # | "Print elements" >> beam.Map(print)
+            | "Print elements" >> beam.Map(pprint.pprint)
         )
 
 if __name__ == '__main__':
