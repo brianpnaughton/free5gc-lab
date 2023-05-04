@@ -42,6 +42,13 @@ Performance thresholds are set for each application type and an alarm is generat
 
 ### Network Faults
 
+Fault management follows a sequence of actions: error detection, error diagnosis, and error recovery.
+
+Error detection monitors events such as alarm signals from network devices (when thresholds are exceeded or in the event of hardware failure), deterioration of performance, or application failures. Error detection facilities also include an error log for future analysis.
+
+
+![fault analysis](faults.drawio.svg)
+
 Identify faults and group together duplicate faults
 
 Perform RCA on what needs to be resolved
