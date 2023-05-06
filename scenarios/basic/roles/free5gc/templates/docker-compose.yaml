@@ -8,6 +8,11 @@ services:
     command: bash -c "while true; do sleep 1; done"
     cap_add:
       - NET_ADMIN
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       dnnet:
         aliases:
@@ -23,6 +28,11 @@ services:
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
     cap_add:
       - NET_ADMIN
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -45,6 +55,11 @@ services:
       privnet:
         aliases:
           - db
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
 
   free5gc-nrf:
     container_name: nrf
@@ -57,6 +72,11 @@ services:
     environment:
       DB_URI: mongodb://db/free5gc
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -75,6 +95,11 @@ services:
       - ./config/amfcfg.yaml:/free5gc/config/amfcfg.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -93,6 +118,11 @@ services:
       - ./config/ausfcfg.yaml:/free5gc/config/ausfcfg.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -111,6 +141,11 @@ services:
       - ./config/nssfcfg.yaml:/free5gc/config/nssfcfg.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -129,6 +164,11 @@ services:
       - ./config/pcfcfg.yaml:/free5gc/config/pcfcfg.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -148,6 +188,11 @@ services:
       - ./config/uerouting.yaml:/free5gc/config/uerouting.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -167,6 +212,11 @@ services:
       - ./config/udmcfg.yaml:/free5gc/config/udmcfg.yaml
     environment:
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -187,6 +237,11 @@ services:
     environment:
       DB_URI: mongodb://db/free5gc
       GIN_MODE: release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -207,6 +262,11 @@ services:
       GIN_MODE: release
     cap_add:
       - NET_ADMIN
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -225,6 +285,11 @@ services:
       - ./config/webuicfg.yaml:/free5gc/config/webuicfg.yaml
     environment:
       - GIN_MODE=release
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
@@ -246,6 +311,11 @@ services:
       - NET_ADMIN
     devices:
       - "/dev/net/tun"
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: {{ansible_default_ipv4.address}}:24224
+        tag: free5gc
     networks:
       privnet:
         aliases:
