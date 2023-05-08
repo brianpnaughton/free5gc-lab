@@ -1,0 +1,8 @@
+ {
+    "host": "5gtest",
+    "ident": "sudo",
+    "message":"vagrant : TTY=pts/1 ; '
+ 'PWD=/vagrant/scenarios/basic ; USER=root ; COMMAND=/bin/sh -c echo '
+ 'BECOME-SUCCESS-wptvorksblapqpgtvitshwnlqfdyumyz ; /usr/bin/python3 '
+ '/home/vagrant/.ansible/tmp/ansible-tmp-1683377636.3601744-8196-2068504387157/AnsiballZ_docker_container_exec.py"
+ }

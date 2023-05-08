@@ -1,0 +1,14 @@
+ {
+    "container_id": "8f7296c62a723d279a944ca72c1dd9aa331fa50ad616d7837ab076fab9b5f6a9",
+    "container_name": "/smf",
+    "source": "stderr",
+    "log":"2023-05-06T12:53:55Z\\u001b[36m '
+ '[INFO
+    ][SMF
+    ][GIN
+    ] \\u001b[
+        0m| 200 |   10.100.200.12 | POST    | '
+ '/nsmf-pdusession/v1/sm-contexts/urn:uuid:fb7178a9-5558-4d75-aef2-4716246d86cb/modify '
+ '|"
+
+}
