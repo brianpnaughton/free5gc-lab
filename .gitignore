@@ -6,6 +6,6 @@
 **/.vagrant
 **/env
 **/*egg-info
-
-
+**/__pycache__
+**/tfx_*
 
