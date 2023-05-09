@@ -5,6 +5,7 @@ import time
 import json
 from threading import Thread
 from kafka import KafkaProducer
+import random
 
 # kafka server
 producer = KafkaProducer(bootstrap_servers=['{{ ansible_default_ipv4.address }}:29092'])
@@ -23,6 +24,8 @@ def main(topic, num_requests):
 
     # Start all of the threads
     for thread in threads:
+        # wait a random time to start each thread
+        time.sleep(random.randint(1, 10))
         thread.start()
 
     # Wait for all of the threads to finish
@@ -54,5 +57,5 @@ def make_request():
     producer.push()
 
 if __name__ == "__main__":
-    num_requests = 1
+    num_requests = 10
     main(num_requests)

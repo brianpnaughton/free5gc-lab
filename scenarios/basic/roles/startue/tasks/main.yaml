@@ -25,12 +25,12 @@
     command: /bin/bash -c "nohup ./nr-ue -c config/uecfg.yaml < /dev/null > ./ue.log 2>&1 & sleep 1"
     chdir: /ueransim
 
-- name: install iperf software
+- name: install network utils software
   community.docker.docker_container_exec:
     container: ueransim
     command: /bin/bash -c "apt update && apt install -y net-tools iproute2 iputils-ping iperf procps"
 
-- name: add iperf route 
+- name: add DN route to GTP tunnel
   community.docker.docker_container_exec:
     container: ueransim
     command: /bin/bash -c "route add -net 172.168.56.0/24 dev uesimtun0"
