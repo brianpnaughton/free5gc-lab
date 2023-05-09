@@ -2,12 +2,9 @@ version: '3.8'
 
 services:
 
-  iperfs:
-    container_name: iperfs
-    image: ubuntu
-    command: bash -c "while true; do sleep 1; done"
-    cap_add:
-      - NET_ADMIN
+  webserver:
+    container_name: webserver
+    image: nginxdemos/hello
     logging:
       driver: "fluentd"
       options:
@@ -16,7 +13,7 @@ services:
     networks:
       dnnet:
         aliases:
-          - iperfs.dnnet.org
+          - webserver.dnnet.org
         ipv4_address: 172.168.56.2
 
   free5gc-upf:

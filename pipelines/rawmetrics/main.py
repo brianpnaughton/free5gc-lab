@@ -105,11 +105,11 @@ def run(
             | "Print logs" >> beam.Map(pprint.pprint)
         )
 
-    flows = (
+    sessions = (
         pipeline
             | "Read flows from Kafka topic" >> KafkaConsume( 
                   consumer_config={'bootstrap_servers': bootstrap_servers,
-                                    'topic': 'flows',
+                                    'topic': 'sessions',
                                     'auto_offset_reset': 'earliest',
                                     'group_id': 'transaction_classification'}
               )
