@@ -1,5 +1,5 @@
-# # run the test python script
-# - name: run the test python script
-#   community.docker.docker_container_exec:
-#     container: ueransim
-#     command: /bin/bash -c "nohup python3 /runtest.py < /dev/null > ./test.log 2>&1 & sleep 1"
+# run the test python script
+- name: run the test python script
+  community.docker.docker_container_exec:
+    container: ueransim
+    command: /bin/bash -c "nohup python3 /runtest.py < /dev/null > ./test.log 2>&1 & sleep 1"

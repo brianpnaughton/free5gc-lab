@@ -14,7 +14,7 @@ topic = "sessions"
 # Set the HTTP URL to call
 url = "http://172.168.56.2"
 
-def main(topic, num_requests):
+def main(num_requests):
 
     # Create a list of threads
     threads = []
@@ -48,6 +48,7 @@ def make_request():
     message = {
         "timestamp": start_time,
         "imsi":"{{ IMSI }}",
+        "service": "Internet",
         "response_code": response_code,
         "response_time": response_time
     }
@@ -57,5 +58,9 @@ def make_request():
     producer.push()
 
 if __name__ == "__main__":
+    # Number of parallel requests to make
     num_requests = 10
-    main(num_requests)
+
+    # loop forever
+    while True:
+        main(num_requests)
