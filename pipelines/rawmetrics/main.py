@@ -23,26 +23,34 @@ inventory=['upf',
            'udm',
            'udr',
            'ueransim']
-  
 
 class FilterMetrics(beam.DoFn):
   def process(self, record):
-    logging.info("filtering inventory")
     key,message=record
     m=json.loads(message)
     if 'container_Name' in m:
       if m['container_Name'] in inventory:
-        logging.info('record '+ m['container_Name'] + ' in inventory')
-        yield m['container_Name'],m
+        yield {
+              # m['container_Name']:{
+              'timestamp': m['timestamp'],
+              'node': m['container_Name'],
+              'cpu_user': m['container_stats']['cpu']['usage']['user'],
+              'cpu_system': m['container_stats']['cpu']['usage']['system'],
+              'memory': m['container_stats']['memory']['usage'],
+              'network_rx_bytes': m['container_stats']['network']['rx_bytes'],
+              'network_tx_bytes': m['container_stats']['network']['tx_bytes'],
+              'network_rx_dropped': m['container_stats']['network']['rx_dropped'],
+              'network_tx_dropped': m['container_stats']['network']['tx_dropped'],
+              'network_rx_errors': m['container_stats']['network']['rx_errors'],
+              'network_tx_errors': m['container_stats']['network']['tx_errors'],
+            # }
+        }
 
 class FilterSyslog(beam.DoFn):
   def process(self, record):
     key,message=record
     m=json.loads(message)
-    if 'container_Name' in m:
-      if m['container_Name'] in inventory:
-        logging.info('record '+ m['container_Name'] + ' in inventory')
-        yield m
+    yield m
 
 def combine_metrics_syslogs(metrics, syslogs):
     combined_data = {
@@ -52,7 +60,6 @@ def combine_metrics_syslogs(metrics, syslogs):
         'syslog_message': syslogs['message']
     }
     return combined_data
-
 
 class CombineMetricsSyslogs(beam.DoFn):
   def process(self, element):
@@ -74,9 +81,10 @@ def run(
                                     'auto_offset_reset': 'earliest',
                                     'group_id': 'transaction_classification'}
               )
-            # | "Fixed window 5s" >> beam.WindowInto(beam.window.FixedWindows(window_size))
-            | "Filter out metrics" >> beam.ParDo(FilterMetrics())
-            | "Print metrics" >> beam.Map(pprint.pprint)
+            | "Filter and transform metrics" >> beam.ParDo(FilterMetrics())
+            # | "Fixed metric window" >> beam.WindowInto(beam.window.FixedWindows(window_size))
+            | "Write metrics to file" >> beam.io.WriteToText("./metrics.txt")
+            # | "Print metrics" >> beam.Map(pprint.pprint)
         )
 
     syslog = (
@@ -88,7 +96,8 @@ def run(
                                     'group_id': 'transaction_classification'}
               )
             # | "Fixed window 5s" >> beam.WindowInto(beam.window.FixedWindows(window_size))
-            # | "Filter out syslog events" >> beam.ParDo(FilterSyslog())
+            | "Filter out syslog events" >> beam.ParDo(FilterSyslog())
+            # | "Write syslog to file" >> beam.io.WriteToText("./syslog.txt")
             | "Print syslog" >> beam.Map(pprint.pprint)
         )
 
@@ -129,7 +138,7 @@ def run(
 
 if __name__ == '__main__':
   logging.getLogger().setLevel(logging.INFO)
-  beam_options = PipelineOptions(streaming=True,save_main_session=True, setup_file="./setup.py")
+  beam_options = PipelineOptions(streaming=True,save_main_session=True, setup_file="./setup.py")#, direct_running_mode='multi_processing')
 
   run(
       "192.168.10.100:29092",

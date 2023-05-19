@@ -161,7 +161,7 @@
   community.docker.docker_container:
     name: cadvisor
     image: gcr.io/cadvisor/cadvisor
-    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ ansible_default_ipv4.address if deployKafka else externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor"]
+    entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ ansible_default_ipv4.address if deployKafka else externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor", "-housekeeping_interval=5s"]
     state: started
     recreate: true
     restart_policy: always
