@@ -5,6 +5,8 @@
 **/*.zip
 **/.vagrant
 **/env
+**/base/free5gc
+**/free5gc/free5gc-compose.yaml
 **/*egg-info
 **/__pycache__
 **/tfx_*

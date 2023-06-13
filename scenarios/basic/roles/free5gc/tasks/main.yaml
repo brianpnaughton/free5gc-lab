@@ -1,12 +1,29 @@
+- name: check if src exists
+  ansible.builtin.stat:
+    # path: ./free5gc/base/v.3.3.0.tar.gz
+    path: ./free5gc/base/free5gc
+  register: free5gc_src
+
+- name: clone free5gc src
+  command: "git clone -b v3.3.0 --recursive https://github.com/free5gc/free5gc.git"
+  args:
+    chdir: ./free5gc/base
+  when: free5gc_src.stat.exists == False
+
+- name: make base free5gc images
+  command: "make all"
+  args:
+    chdir: ./free5gc
+
 - name: template docker compose file
   ansible.builtin.template:
     src: docker-compose.yaml
-    dest: ./free5gc-compose.yaml
+    dest: ./free5gc/free5gc-compose.yaml
     mode: '0644'    
 
 - name: start free5gc instance
   community.docker.docker_compose:
-    project_src: .
+    project_src: ./free5gc
     files:
     - free5gc-compose.yaml
 

@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  become: yes
+  tasks:
+  - name: remove free5gc instance
+    community.docker.docker_compose:
+      project_src: ./scenarios/basic/free5gc
+      files: free5gc-compose.yaml
+      state: absent
+    ignore_errors: yes
+
+  - name: remove kafka instance
+    community.docker.docker_compose:
+      project_src: /opt
+      files: kafka-compose.yaml
+      state: absent
+    ignore_errors: yes
+
+  - name: remove cadvisor docker instance
+    community.docker.docker_container:
+      name: cadvisor
+      state: absent
+    ignore_errors: yes
+
+  - name: remove fluentd docker instance
+    community.docker.docker_container:
+      name: fluentd
+      state: absent
+    ignore_errors: yes

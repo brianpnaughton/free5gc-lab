@@ -2,10 +2,12 @@
 version: '3'
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: docker.io/bitnami/zookeeper:3.8
     container_name: zookeeper
     # networks: 
     #   - kafka_network
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
     ports:
       - "2181:2181"
 
