@@ -16,7 +16,6 @@ It is assumed the following commands are run from within the virtual machine sta
 To start the free5gc environment run the following command:
 
 ```bash
-cd /vagrant/scenarios/basic
 ansible-playbook start.yaml
 ```
 

@@ -12,7 +12,7 @@ from beam_nuggets.io.kafkaio import KafkaConsume
 
 # names of the containers we are interested in
 inventory=['upf',
-           'iperfs',
+           'webserver',
            'mongodb',
            'nrf',
            'amf',
