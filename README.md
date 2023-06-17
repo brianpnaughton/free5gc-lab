@@ -52,7 +52,7 @@ Change the __setup.yaml__ file to point to __"localhost"__. Make sure the top li
 Then run the __setup.yaml__ playbook
 
 ```bash
-ansible-playbook setup.yaml
+ansible-playbook setup.yaml --ask-become-yes
 ```
 
 ./kafka-console-consumer.sh --bootstrap-server broker:9092 --topic cadvisor --from-beginning --max-messages 10

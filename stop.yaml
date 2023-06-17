@@ -4,7 +4,7 @@
   tasks:
   - name: remove free5gc instance
     community.docker.docker_compose:
-      project_src: ./scenarios/basic/free5gc
+      project_src: ./free5gc
       files: free5gc-compose.yaml
       state: absent
     ignore_errors: yes

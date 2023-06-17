@@ -1,6 +1,5 @@
 - name: check if src exists
   ansible.builtin.stat:
-    # path: ./free5gc/base/v.3.3.0.tar.gz
     path: ./free5gc/base/free5gc
   register: free5gc_src
 

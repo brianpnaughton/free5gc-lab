@@ -157,10 +157,15 @@
       KAFKA_BROKERCONNECT: "{{ ansible_default_ipv4.address }}:{{ kafkaPort }}"
   when: deployKafdrop == true
 
+
+- name: select cadvisor image
+  set_fact:
+    cadvisor_image: "{{ 'gcr.io/cadvisor/cadvisor-arm64:v0.47.0' if ansible_architecture == 'aarch64' else 'gcr.io/cadvisor/cadvisor' }}"
+
 - name: deploy cadvisor and connect to kafka
   community.docker.docker_container:
     name: cadvisor
-    image: gcr.io/cadvisor/cadvisor
+    image: "{{ cadvisor_image }}"
     entrypoint: ["/usr/bin/cadvisor", "-logtostderr","-storage_driver=kafka","-storage_driver_kafka_broker_list={{ ansible_default_ipv4.address if deployKafka else externalKafkaAddress }}:{{ kafkaPort }}","-storage_driver_kafka_topic=cadvisor", "-housekeeping_interval=5s"]
     state: started
     recreate: true
