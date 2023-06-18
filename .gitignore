@@ -10,4 +10,5 @@
 **/*egg-info
 **/__pycache__
 **/tfx_*
+**/target
 
