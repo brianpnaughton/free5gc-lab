@@ -41,6 +41,9 @@ public class CAdvisorMetric {
     public void setMemUsage(Long memUsage) {
         this.memUsage = memUsage;
     }
+    public void setCpuUsage(Long CpuUsage) {
+        this.memUsage = CpuUsage;
+    }
     public void setRx_bytes(Long rx_bytes) {
         this.rx_bytes = rx_bytes;
     }
@@ -65,6 +68,9 @@ public class CAdvisorMetric {
     }    
     public Long getTimeStamp() {
         return timestamp;
+    }
+    public Long getCpuUsage() {
+        return cpuUsage;
     }
     public Long getMemUsage() {
         return memUsage;

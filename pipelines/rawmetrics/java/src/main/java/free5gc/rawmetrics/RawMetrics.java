@@ -11,31 +11,23 @@ package free5gc.rawmetrics;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.io.kafka.KafkaIO;
 import org.apache.beam.sdk.options.Default;
+import org.apache.beam.sdk.options.DefaultValueFactory;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.options.Validation.Required;
-import org.apache.beam.sdk.transforms.MapElements;
-import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.transforms.Values;
-import org.apache.beam.sdk.values.KV;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import java.time.Instant;
 
-import free5gc.rawmatrics.utils.WriteToBigQuery;
-import free5gc.rawmatrics.utils.WriteWindowedToBigQuery;
+import java.time.Instant;
 
 public class RawMetrics {
     static ArrayList <String> containerList = new ArrayList<String>();
@@ -70,7 +62,7 @@ public class RawMetrics {
                         Instant now = Instant.now();
                         Long timestamp = now.getEpochSecond();
 
-                        // report total cpu usage
+                        // get total cpu usage
                         JSONObject cpu = (JSONObject) stats.get("cpu");
                         JSONObject cpuUsage = (JSONObject)cpu.get("usage");
 
@@ -111,16 +103,38 @@ public class RawMetrics {
     }
 
     public interface RawMetricsOptions extends PipelineOptions {
+        @Description("If set to true results will be printed to stdout")
+        @Default.Boolean(false)
+        boolean getTest();
+        void setTest(boolean value);
+
         @Description("Kafka Server Address")
         @Default.String("10.211.55.3:29092")
         String getKafkaServer();
         void setKafkaServer(String value);
 
-        /** Set this required option to specify where to write the output. */
-        @Description("Path of the file to write to")
-        // @Required
-        String getOutput();
-        void setOutput(String value);
+        @Description("BigQuery project")
+        @Default.String("free5gc-project")
+        String getBQProject();
+        void setBQProject(String project);
+
+        @Description("BigQuery dataset name")
+        @Default.String("free5gc-dataset")
+        String getBQDataset();
+        void setBQDataset(String dataset);
+
+        @Description("BigQuery table name")
+        @Default.InstanceFactory(BigQueryTableFactory.class)
+        String getBQTable();
+        void setBQTable(String table);
+
+        /** Returns the job name as the default BigQuery table name. */
+        class BigQueryTableFactory implements DefaultValueFactory<String> {
+            @Override
+            public String create(PipelineOptions options) {
+            return options.getJobName().replace('-', '_');
+            }
+        }
     }
 
     public static void main(String[] args) {
@@ -142,23 +156,7 @@ public class RawMetrics {
                 .withoutMetadata())
         .apply(Values.create())
         .apply(ParDo.of(new FormatMetrics()))
-        .apply(
-            "PrintResults",
-            MapElements.via(
-                new SimpleFunction<CAdvisorMetric, CAdvisorMetric>() {
-                  @Override
-                  public CAdvisorMetric apply(CAdvisorMetric input) {
-                    System.out.printf(input.toString());
-                    return input;
-                  }
-                }));
-        // .apply(
-        //     "WriteTeamScoreSums",
-        //     new WriteWindowedToBigQuery<>(
-        //         options.as(GcpOptions.class).getProject(),
-        //         options.getDataset(),
-        //         options.getLeaderBoardTableName() + "_team",
-        //         configureWindowedTableWrite()));
+        .apply("write output", new WriteMetrics<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
 
         p.run().waitUntilFinish();    
     }    
