@@ -1,7 +1,13 @@
-package free5gc.rawmetrics;
+package free5gc.cadvisor;
+
+import java.time.Instant;
+import java.util.ArrayList;
 
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 @DefaultCoder(AvroCoder.class)
 public class CAdvisorMetric {
@@ -97,4 +103,69 @@ public class CAdvisorMetric {
     public String toString() {
         return String.format("containerName = %s, timestamp = %d, memUsage = %d, cpuUsage = %d, rx_bytes = %d, rx_errors = %d, rx_dropped = %d, tx_bytes = %d, tx_errors = %d, tx_dropped = %d", containerName, timestamp, memUsage, cpuUsage, rx_bytes, rx_errors, rx_dropped, tx_bytes, tx_errors, tx_dropped);
     }
+
+    public static class FormatMetrics extends DoFn<String, CAdvisorMetric> {
+        ArrayList <String> containerList;
+
+        public FormatMetrics() {}
+
+        public FormatMetrics(ArrayList <String> containerList) {
+            this.containerList = containerList;
+        }
+
+        @ProcessElement
+        public void processElement(ProcessContext c) {
+            try{
+                // parse the json c.element() and extract the metrics we are interested in
+                JSONParser parser = new JSONParser(); 
+                JSONObject json = (JSONObject) parser.parse(c.element());
+
+                // search string for a list of container names
+                for (String element : containerList){
+                    if (element.contains(json.get("container_Name").toString())){
+                        JSONObject stats = (JSONObject) json.get("container_stats");
+
+                        Instant now = Instant.now();
+                        Long timestamp = now.getEpochSecond();
+
+                        // get total cpu usage
+                        JSONObject cpu = (JSONObject) stats.get("cpu");
+                        JSONObject cpuUsage = (JSONObject)cpu.get("usage");
+
+                        // get memory usage
+                        JSONObject memory = (JSONObject) stats.get("memory");
+                        Long memUsage = (Long)memory.get("usage");
+
+                        // get network usage
+                        JSONObject network = (JSONObject) stats.get("network");
+                        Long rx_bytes = (Long) network.get("rx_bytes");
+                        Long rx_errors = (Long) network.get("rx_errors");
+                        Long rx_dropped = (Long) network.get("rx_dropped");
+                        Long tx_bytes = (Long) network.get("tx_bytes");
+                        Long tx_errors = (Long) network.get("tx_errors");
+                        Long tx_dropped = (Long) network.get("tx_dropped");
+
+                        CAdvisorMetric metric = new CAdvisorMetric(
+                            json.get("container_Name").toString(),
+                            timestamp,
+                            memUsage,
+                            (Long)cpuUsage.get("total"),
+                            rx_bytes,
+                            rx_errors,
+                            rx_dropped,
+                            tx_bytes,
+                            tx_errors,
+                            tx_dropped
+                        );
+
+                        c.output(metric);
+                    }
+                }
+
+            } catch (Exception e) {
+                System.out.printf("error %s \n\n\n", e);
+            }
+        }        
+    }
+
 }

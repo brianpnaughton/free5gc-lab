@@ -20,6 +20,7 @@ The following options can be provided to the job.
 * --bqdataset: name of the bq dataset
 * --bqtablename: name of the bq tablename (if blank will generate based on the job name)
 * --test: data will not be written to big query, but printed to stdout instead
+* --runner: change the beam runner for the job
 
 To run a test job that connects to a local kafka server and prints the metrics to stdout run the following command. 
 
