@@ -19,7 +19,7 @@ import com.google.api.services.bigquery.model.TableSchema;
 
 public class WriteMetrics<InputT> extends PTransform<PCollection<InputT>, PDone>  {
 
-    private boolean isTest=true;
+    private boolean isTest=false;
     private String project;
     private String dataset;
     private String table;
@@ -28,6 +28,11 @@ public class WriteMetrics<InputT> extends PTransform<PCollection<InputT>, PDone>
 
     public WriteMetrics(boolean test, String project, String dataset, String table) {
         this.isTest = test;
+        this.project=project;
+        this.dataset=dataset;
+        this.table=table;
+
+        System.out.printf("BQ project=%s, dataset=%s, tablename=%s",project,dataset,table);
     }
 
     // build big query row from cadvisor metric
@@ -91,7 +96,7 @@ public class WriteMetrics<InputT> extends PTransform<PCollection<InputT>, PDone>
                         .to(String.format("%s:%s.%s", project, dataset, table))
                         .withSchema(getSchema())
                         .withCreateDisposition(CreateDisposition.CREATE_IF_NEEDED)
-                        .withWriteDisposition(WriteDisposition.WRITE_TRUNCATE));
+                        .withWriteDisposition(WriteDisposition.WRITE_APPEND));
         }
         return PDone.in(input.getPipeline());
     }
