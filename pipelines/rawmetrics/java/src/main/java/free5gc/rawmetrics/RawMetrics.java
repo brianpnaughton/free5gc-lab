@@ -1,18 +1,22 @@
 package free5gc.rawmetrics;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.kafka.KafkaIO;
+import org.apache.beam.sdk.io.kafka.KafkaRecord;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.DefaultValueFactory;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.transforms.Values;
-import org.apache.kafka.common.TopicPartition;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 
 import free5gc.cadvisor.WriteMetrics;
@@ -20,7 +24,7 @@ import free5gc.cadvisor.WriteMetrics;
 public class RawMetrics {
     static ArrayList <String> containerList = new ArrayList<String>();
 
-    private static void buildList(){
+    private static void buildContainerList(){
         containerList.add("webserver");
         containerList.add("mongodb");
         containerList.add("nrf");
@@ -70,25 +74,62 @@ public class RawMetrics {
     }
 
     public static void main(String[] args) {
-        buildList();
+        buildContainerList();
 
         RawMetricsOptions options =  PipelineOptionsFactory.fromArgs(args).withValidation().as(RawMetricsOptions.class);
         final Pipeline p = Pipeline.create(options);
 
-        p.apply(
+        final TupleTag<String> cadvisorTag = new TupleTag<String>("cadvisor"){};
+        final TupleTag<String> logTag = new TupleTag<String>("logs"){};
+        final TupleTag<String> sessionsTag = new TupleTag<String>("sessions"){};
+        final TupleTag<String> syslogTag = new TupleTag<String>("syslog"){};
+        final TupleTag<String> emptyOutputTag = new TupleTag<String>("empty") {};
+        final TupleTag<String> additionalOutputTag = new TupleTag<String>("extra") {};
+
+        List<String> topics = Arrays.asList("cadvisor", "free5gc-log", "sessions", "syslog-messages");
+        
+        PCollectionTuple topicCollection=p.apply(
             KafkaIO.<Long, String>read()
                 .withBootstrapServers(options.getKafkaServer()) 
-                .withTopicPartitions(
-                    Collections.singletonList(
-                        new TopicPartition(
-                            "cadvisor",
-                            0))) 
+                .withTopics(topics)
                 .withKeyDeserializer(LongDeserializer.class)
-                .withValueDeserializer(StringDeserializer.class)
-                .withoutMetadata())
-        .apply(Values.create())
-        .apply(ParDo.of(new free5gc.cadvisor.CAdvisorMetric.FormatMetrics(containerList)))
-        .apply("write output", new WriteMetrics<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
+                .withValueDeserializer(StringDeserializer.class))
+            .apply("fork topics",
+                ParDo.of(
+                    new DoFn<KafkaRecord<Long,String>, String>() {
+                        @ProcessElement
+                        public void processElement(ProcessContext c) {
+                            // tag kafka messages by topic
+                            if (c.element().getTopic().contains("cadvisor")){
+                                System.out.println("cadvisor message caught");
+                                c.output(cadvisorTag, c.element().getKV().getValue().toString());
+                            }else if (c.element().getTopic().contains("free5gc-log")){
+                                System.out.println("free5gc-log message caught");
+                                c.output(logTag, c.element().getKV().getValue());
+                            }else if (c.element().getTopic().contains("sessions")){
+                                System.out.println("sessions message caught");
+                                c.output(sessionsTag, c.element().getKV().getValue());
+                            }else if (c.element().getTopic().contains("syslog-messages")){
+                                System.out.println("syslog-messages message caught");
+                                c.output(syslogTag, c.element().getKV().getValue());
+                            }
+                        }
+                    }
+                ).withOutputTags(emptyOutputTag, TupleTagList.of(cadvisorTag).and(logTag).and(sessionsTag).and(syslogTag).and(additionalOutputTag))
+            );
+
+        topicCollection.get(cadvisorTag)
+            .apply(ParDo.of(new free5gc.cadvisor.CAdvisorMetric.FormatMetrics(containerList)))
+            .apply("write output", new WriteMetrics<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
+
+        topicCollection.get(sessionsTag)
+            .apply(ParDo.of(new free5gc.sessions.SessionMetric.FormatSessions()));
+
+        topicCollection.get(syslogTag)
+            .apply(ParDo.of(new free5gc.syslog.SyslogMessage.FormatSyslog()));
+
+        topicCollection.get(logTag)
+            .apply(ParDo.of(new free5gc.logs.LogMessage.FormatLogs()));
 
         p.run().waitUntilFinish();    
     }    

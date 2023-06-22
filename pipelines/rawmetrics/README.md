@@ -32,7 +32,7 @@ The following options can be provided to the job.
 To run a test job that connects to a local kafka server and prints the metrics to stdout run the following command. 
 
 ```
-java -jar java -jar target/free5gc-metrics-bundled-0.1.jar --kafkaserver=localhost:9092 --test=true
+java -jar target/free5gc-metrics-bundled-0.1.jar --kafkaserver=localhost:9092 --test=true
 ```
 
 To write to BQ you can run the following command. 
