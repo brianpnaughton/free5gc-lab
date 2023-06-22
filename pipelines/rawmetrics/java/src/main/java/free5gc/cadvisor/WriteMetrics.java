@@ -77,7 +77,7 @@ public class WriteMetrics<InputT> extends PTransform<PCollection<InputT>, PDone>
     protected class BuildLine extends DoFn<InputT, String> {
         @ProcessElement
         public void processElement(ProcessContext c, BoundedWindow window) {
-            System.out.println("BuildLine: " + c.element().toString());
+            System.out.println("***************Cadvisor: " + c.element().toString()+"***************");
             c.output(c.element().toString());
         }
     }

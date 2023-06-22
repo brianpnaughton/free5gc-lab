@@ -20,6 +20,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 
 import free5gc.cadvisor.WriteMetrics;
+import free5gc.sessions.WriteSessions;
 
 public class RawMetrics {
     static ArrayList <String> containerList = new ArrayList<String>();
@@ -101,16 +102,12 @@ public class RawMetrics {
                         public void processElement(ProcessContext c) {
                             // tag kafka messages by topic
                             if (c.element().getTopic().contains("cadvisor")){
-                                System.out.println("cadvisor message caught");
                                 c.output(cadvisorTag, c.element().getKV().getValue().toString());
                             }else if (c.element().getTopic().contains("free5gc-log")){
-                                System.out.println("free5gc-log message caught");
                                 c.output(logTag, c.element().getKV().getValue());
                             }else if (c.element().getTopic().contains("sessions")){
-                                System.out.println("sessions message caught");
                                 c.output(sessionsTag, c.element().getKV().getValue());
                             }else if (c.element().getTopic().contains("syslog-messages")){
-                                System.out.println("syslog-messages message caught");
                                 c.output(syslogTag, c.element().getKV().getValue());
                             }
                         }
@@ -120,10 +117,11 @@ public class RawMetrics {
 
         topicCollection.get(cadvisorTag)
             .apply(ParDo.of(new free5gc.cadvisor.CAdvisorMetric.FormatMetrics(containerList)))
-            .apply("write output", new WriteMetrics<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
+            .apply("write cadvisor output", new WriteMetrics<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
 
         topicCollection.get(sessionsTag)
-            .apply(ParDo.of(new free5gc.sessions.SessionMetric.FormatSessions()));
+            .apply(ParDo.of(new free5gc.sessions.SessionMetric.FormatSessions()))
+            .apply("write sessions output", new WriteSessions<>(options.getTest(), options.getBQProject(), options.getBQDataset(), options.getBQTable()));
 
         topicCollection.get(syslogTag)
             .apply(ParDo.of(new free5gc.syslog.SyslogMessage.FormatSyslog()));

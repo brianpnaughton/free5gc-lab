@@ -12,7 +12,7 @@
   set_fact:
     IMSI: "208930000000003"
 
-- name: Run a simple command (command)
+- name: Deploy test script
   community.docker.docker_container_exec:
       container: ueransim
       argv:

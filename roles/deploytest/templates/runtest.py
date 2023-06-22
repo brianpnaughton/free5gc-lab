@@ -59,7 +59,7 @@ def make_request():
 
 if __name__ == "__main__":
     # Number of parallel requests to make
-    num_requests = 10
+    num_requests = 1
 
     # loop forever
     while True:
