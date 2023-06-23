@@ -7,6 +7,7 @@ import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
 @DefaultCoder(AvroCoder.class)
@@ -124,7 +125,7 @@ public class CAdvisorMetric {
                 for (String element : containerList){
                     if (element.contains(json.get("container_Name").toString())){
                         JSONObject stats = (JSONObject) json.get("container_stats");
-
+        
                         Instant now = Instant.now();
                         Long timestamp = now.getEpochSecond();
 
@@ -138,27 +139,36 @@ public class CAdvisorMetric {
 
                         // get network usage
                         JSONObject network = (JSONObject) stats.get("network");
-                        Long rx_bytes = (Long) network.get("rx_bytes");
-                        Long rx_errors = (Long) network.get("rx_errors");
-                        Long rx_dropped = (Long) network.get("rx_dropped");
-                        Long tx_bytes = (Long) network.get("tx_bytes");
-                        Long tx_errors = (Long) network.get("tx_errors");
-                        Long tx_dropped = (Long) network.get("tx_dropped");
+                        JSONArray interfaces = (JSONArray) network.get("interfaces");
+                        JSONObject eth0=null;
+                        for (int i = 0; i < interfaces.size(); i++){
+                            if (interfaces.get(i).toString().contains("eth0")){
+                                eth0 = (JSONObject) interfaces.get(i);
+                                break;
+                            }
+                        }
+                        if (eth0!=null){
+                            Long rx_bytes = (Long) eth0.get("rx_bytes");
+                            Long rx_errors = (Long) eth0.get("rx_errors");
+                            Long rx_dropped = (Long) eth0.get("rx_dropped");
+                            Long tx_bytes = (Long) eth0.get("tx_bytes");
+                            Long tx_errors = (Long) eth0.get("tx_errors");
+                            Long tx_dropped = (Long) eth0.get("tx_dropped");
 
-                        CAdvisorMetric metric = new CAdvisorMetric(
-                            json.get("container_Name").toString(),
-                            timestamp,
-                            memUsage,
-                            (Long)cpuUsage.get("total"),
-                            rx_bytes,
-                            rx_errors,
-                            rx_dropped,
-                            tx_bytes,
-                            tx_errors,
-                            tx_dropped
-                        );
-
-                        c.output(metric);
+                            CAdvisorMetric metric = new CAdvisorMetric(
+                                json.get("container_Name").toString(),
+                                timestamp,
+                                memUsage,
+                                (Long)cpuUsage.get("total"),
+                                rx_bytes,
+                                rx_errors,
+                                rx_dropped,
+                                tx_bytes,
+                                tx_errors,
+                                tx_dropped
+                            );
+                            c.output(metric);
+                        }
                     }
                 }
 
